@@ -1,1 +1,6 @@
-#custom functions
+//custom functions
+#ifndef MAIN_H
+#define MAIN_H
+
+
+#endif
