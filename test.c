@@ -4,6 +4,6 @@
 
 int main(void)
 {
-	int n = _printf("hello world %c", 'H');
+	int n = _printf("hello world %s", "muthomi");
         printf("\nn = %d \n", n);
 }

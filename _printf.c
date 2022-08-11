@@ -7,6 +7,17 @@
  * @param ...
  * Return: always
  */
+int printString(char *string)
+{
+	int s = 0;
+	int i = 0;
+	while (string[i] != '\0')
+	{
+		s = s + _putchar(string[i]);
+		i++;
+	}
+	return (s);
+}
 int _printf(const char *format, ...)
 {
 	int count = 0;
@@ -31,11 +42,13 @@ int _printf(const char *format, ...)
 				/* prrint character from va_list */
 				count = count + _putchar(va_arg(data, int));
 				break;
-			
+			case 's':
+				count = count + printString(va_arg(data, char *));
+				break;
 			default:
 				break;
 			}
-			/* checks for and skips the character after % during count */
+			/* checks for and skips the character after % during count ss*/
 			i += 2;
 		}
 	}
