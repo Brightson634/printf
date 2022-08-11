@@ -1,100 +1,90 @@
 #include "main.h"
-#include <stdarg.h>
-#include <stdio.h>
+
+void cleanup(va_list args, buffer_t *output);
+int run_printf(const char *format, va_list args, buffer_t *output);
+int _printf(const char *format, ...);
+
 /**
- * _printf - Entry point
- * @format: format
- * @param ...
- * Return: always
+ * cleanup - Peforms cleanup operations for _printf.
+ * @args: A va_list of arguments provided to _printf.
+ * @output: A buffer_t struct.
  */
-int printString(char *string)
+void cleanup(va_list args, buffer_t *output)
 {
-	int s = 0;
-	int i = 0;
-	while (string[i] != '\0')
-	{
-		s = s + _putchar(string[i]);
-		i++;
-	}
-	return (s);
-}
-/*
-int printInt(int *int)
-{
-	int s = 0;
-	int i = 0;
-	while (int[i] != '\0')
-	{
-		s = s + _putchar(int[i]);
-		i++;
-	}
-	return (s);
-}
-*/
-int printDecimal(int decimal)
-{
-	int i = 0;
-
-	/* checks for negative and prints negative number */
-	if (decimal < 0)
-	{
-		i = i + _putchar('-');
-		decimal = decimal * -1;
-	}
-	
-	/* uses recursion to print all values */
-	if(decimal / 10)
-	{
-		i = i + printDecimal(decimal/10);
-	}
-	i = i + _putchar(decimal%10 + '0');
-	return (i);
+	va_end(args);
+	write(1, output->start, output->len);
+	free_buffer(output);
 }
 
-
-int _printf(const char *format, ...)
+/**
+ * run_printf - Reads through the format string for _printf.
+ * @format: Character string to print - may contain directives.
+ * @output: A buffer_t struct containing a buffer.
+ * @args: A va_list of arguments.
+ *
+ * Return: The number of characters stored to output.
+ */
+int run_printf(const char *format, va_list args, buffer_t *output)
 {
-	int count = 0;
-	int i = 0;
-	va_list data;
+	int i, wid, prec, ret = 0;
+	char tmp;
+	unsigned char flags, len;
+	unsigned int (*f)(va_list, buffer_t *,
+			unsigned char, int, int, unsigned char);
 
-	va_start(data, *format);
-
-	while (format[i] != '\0')
+	for (i = 0; *(format + i); i++)
 	{
-		/* count the number of characters */
-		if (format[i] != '%')
+		len = 0;
+		if (*(format + i) == '%')
 		{
-			/* checks for and skips the character % during count */
-			count = count + _putchar(format[i]);
-			i++;
-		} else if (format[i] == '%' && format [i + 1] != ' ')
-		{
-			switch (format[i + 1])
+			tmp = 0;
+			flags = handle_flags(format + i + 1, &tmp);
+			wid = handle_width(args, format + i + tmp + 1, &tmp);
+			prec = handle_precision(args, format + i + tmp + 1,
+					&tmp);
+			len = handle_length(format + i + tmp + 1, &tmp);
+
+			f = handle_specifiers(format + i + tmp + 1);
+			if (f != NULL)
 			{
-			case 'c':
-				/* prrint character from va_list */
-				count = count + _putchar(va_arg(data, int));
-				break;
-			case 's':
-				count = count + printString(va_arg(data, char *));
-				break;
-			case '%':
-				/* prrint percentage from va_list */
-				count = count + _putchar('%');
-				break;
-			case 'd':
-				count = count + printDecimal(va_arg(data, long int));
-				break;
-			case 'd':
-				count = count + printDecimal(va_arg(data, long int));
-				break;
-			default:
+				i += tmp + 1;
+				ret += f(args, output, flags, wid, prec, len);
+				continue;
+			}
+			else if (*(format + i + tmp + 1) == '\0')
+			{
+				ret = -1;
 				break;
 			}
-			/* checks for and skips the character after % during count */
-			i += 2;
 		}
+		ret += _memcpy(output, (format + i), 1);
+		i += (len != 0) ? 1 : 0;
 	}
-	return (count);
+	cleanup(args, output);
+	return (ret);
+}
+
+/**
+ * _printf - Outputs a formatted string.
+ * @format: Character string to print - may contain directives.
+ *
+ * Return: The number of characters printed.
+ */
+int _printf(const char *format, ...)
+{
+	buffer_t *output;
+	va_list args;
+	int ret;
+
+	if (format == NULL)
+		return (-1);
+	output = init_buffer();
+	if (output == NULL)
+		return (-1);
+
+	va_start(args, format);
+
+	ret = run_printf(format, args, output);
+
+	return (ret);
 }
