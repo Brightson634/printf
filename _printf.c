@@ -86,7 +86,7 @@ int _printf(const char *format, ...)
 			case 'd':
 				count = count + printDecimal(va_arg(data, long int));
 				break;
-			case 'd':
+			case 'i':
 				count = count + printDecimal(va_arg(data, long int));
 				break;
 			default:
